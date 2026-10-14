@@ -29,17 +29,6 @@ npm run check
 
 此检查验证脚本语法与本地资源引用；不替代浏览器视觉与手势实测。
 
-## 发布到 GitHub Pages
-
-1. 创建公开仓库（例如 `yuanjing`），将这个目录内的全部文件上传到 `main` 分支，包括 `.github/workflows/pages.yml`。
-2. 仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。
-3. 打开 **Actions → Publish Yuanjing to GitHub Pages → Run workflow**。以后推送到 `main` 会自动部署。
-4. 部署成功后，在 Settings → Pages 或工作流的部署环境中取得公开网址，通常为 `https://你的用户名.github.io/yuanjing/`。
-
-所有本地资源使用相对路径，可以放在仓库子路径下。只发布 `dist/`，没有 API 密钥或服务器配置。
-
-官方说明：[GitHub Pages 自定义工作流](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)。
-
 ## 数据与计算口径
 
 输入的生辰信息只在浏览器内存中计算；应用没有将生辰上传的接口，也没有应用级追踪代码。选择导出后，JSON 保存到用户本机。访问在线站点本身会访问托管平台。
