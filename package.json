@@ -1,0 +1,10 @@
+{
+  "name": "yuanjing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "元境 · 生辰星图",
+  "scripts": {
+    "dev": "node tools/serve.mjs",
+    "check": "node tools/check.mjs"
+  }
+}
