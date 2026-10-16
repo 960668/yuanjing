@@ -1,7 +1,7 @@
 # 元境 · 生辰星图
 
 在线体验：https://guizhengliu.github.io/yuanjing/
-源码：https://github.com/960668/yuanjing
+源码：https://github.com/guizhengliu/yuanjing
 
 一个将四柱、十神和传统神煞呈现为「内景宇宙」的互动网页。中央为固定二维盘坐灵体；透干、藏干各沿一条三维轨道环绕，神煞分布在两条不共面的轨道。
 
