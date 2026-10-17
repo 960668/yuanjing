@@ -55,7 +55,7 @@
 .has-3d.dragging,.has-3d.dragging .cosmos3d{cursor:grabbing}
 @media(max-width:700px){.space-controls{gap:8px;font-size:8px}.space-controls button{font-size:8px}}
 
-.has-3d{touch-action:none}.cosmos3d{pointer-events:none}
+.world,.has-3d{touch-action:pan-y pinch-zoom}.cosmos3d{pointer-events:none;touch-action:auto}
 
 /* Fixed 2D spirit is independent of the orbital camera. */
 .has-3d .figure,.has-3d .figure-caption{visibility:visible}
@@ -161,3 +161,11 @@
 .detailicon>.symbol-glyph{width:38px;height:38px}
 .detailicon[data-family="omen"]{color:#c6a9e6}
 .omen-list-icon{display:inline-flex;width:23px;height:23px;vertical-align:middle;margin-right:8px;color:inherit;font-style:normal}
+
+/* A compact hit surface controls the rings; the world itself stays scrollable. */
+.orbit-interaction{position:absolute;top:95px;left:50%;transform:translateX(-50%);width:calc(100% - 64px);max-width:520px;height:380px;z-index:2;touch-action:pan-y;cursor:grab;outline:none}
+.orbit-interaction.is-dragging{cursor:grabbing}
+.orbit-interaction:focus-visible{outline:1px solid #b4caa64a;outline-offset:5px;border-radius:50%}
+.has-3d .symbol{touch-action:pan-y pinch-zoom}
+.gesture-touch{display:none}
+@media(max-width:700px),(pointer:coarse){.orbit-interaction{top:125px;height:320px;max-width:400px}.gesture-desktop{display:none}.gesture-touch{display:inline}}

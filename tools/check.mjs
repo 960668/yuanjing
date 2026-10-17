@@ -11,7 +11,7 @@ for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
   if (/^(https?:|#|mailto:)/.test(ref)) continue;
   await access(path.resolve(dist, ref.split(/[?#]/)[0]));
 }
-for (const file of ['app.js', 'symbol-icons.js', 'cosmos3d.js', 'shensha-adapter.js', 'vendor/shensha.js', 'interpretation-engine.js', 'interpretation-ui.js']) {
+for (const file of ['app.js', 'orbit-gestures.js', 'symbol-icons.js', 'cosmos3d.js', 'shensha-adapter.js', 'vendor/shensha.js', 'interpretation-engine.js', 'interpretation-ui.js']) {
   const result = spawnSync(process.execPath, ['--check', path.join(dist, file)], { encoding: 'utf8' });
   if (result.status !== 0) throw new Error(result.stderr || `Syntax check failed: ${file}`);
 }
@@ -21,3 +21,5 @@ console.log('All local assets, module imports and application script syntax pass
 await import('./reading-check.mjs');
 
 await import('./icons-check.mjs');
+
+await import('./gestures-check.mjs');
