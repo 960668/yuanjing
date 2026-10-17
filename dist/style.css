@@ -137,3 +137,19 @@
 #reading-dialog .reading-card .reading-practice p{color:#d0c6a8;font-size:11px}
 .reading-practice h5{font-size:10px;font-weight:400;color:#c4cfb6;margin:15px 0 0}
 @media(max-width:480px){.reading-card-featured{padding:22px 17px}#reading-dialog .reading-card .reading-motif{font-size:20px}}
+
+.reading-portrait{padding:23px 26px;margin:24px 0 30px;border:1px solid #c9b78044;background:linear-gradient(120deg,#baaa7612,transparent),#14231d}
+#reading-dialog .reading-portrait h3{font-size:23px;margin:0 0 10px}
+#reading-dialog .reading-portrait-note{font-size:10px;color:#96ab94;margin:0 0 20px}
+.reading-portrait-row{padding:13px 0;border-top:1px solid #b5c5a91f}
+.reading-portrait-row h4{font-size:11px;color:#ceb886;letter-spacing:2px;font-weight:400;margin:0 0 6px}
+#reading-dialog .reading-portrait-row p{font-size:13px;line-height:2;color:#c2cdb8;margin:0}
+#reading-dialog .reading-card .reading-context{font-size:10px;color:#aab99e;margin:9px 0 14px}
+.reading-profile+.reading-profile{margin-top:28px;padding-top:20px;border-top:1px solid #b5c5a92f}
+.reading-descriptions{margin:19px 0 0}
+.reading-descriptions dt{font-size:10px;letter-spacing:1px;color:#c9b78c;margin:18px 0 6px}
+.reading-descriptions dd{margin:0;color:#b2c1a9;font-size:11px;line-height:1.95}
+.reading-descriptions .reading-tension{padding:0;border:0;margin:0;color:#bdb59f}
+#reading-dialog .reading-card .reading-selection{color:#cbbd99;font-size:10px}
+.reading-combination{padding:12px;background:#cbb78008;border:1px solid #cbb78024;margin-top:10px}
+@media(max-width:480px){.reading-portrait{padding:21px 17px}#reading-dialog .reading-portrait-row p{font-size:12px}}

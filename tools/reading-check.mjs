@@ -15,10 +15,15 @@ assert.deepEqual(config.dimensions.filter(d => d.featured).map(d => d.id), ['tal
 const entry = (id, name, kind = 'stem', pillar = '年柱') => ({ id, name, kind, pillar, origin: pillar + ' · 测试来源' });
 const fixture = structuredClone(config);
 fixture.dimensions = [structuredClone(config.dimensions[0])];
+fixture.patterns = [];
 fixture.dimensions[0].motifs = [
   { ...structuredClone(config.dimensions[0].motifs[0]), id:'flow', label:'探索', rules:[{id:'a',names:['偏财','桃花'],kinds:['stem','hidden','omen'],weight:1,explanation:'测试映射'}] },
   { ...structuredClone(config.dimensions[0].motifs[1]), id:'care', label:'经营', rules:[{id:'b',names:['正财'],kinds:['stem','hidden'],weight:1,explanation:'测试映射'}] }
 ];
+fixture.dimensions[0].motifs[0].profile.headline = '探索';
+fixture.dimensions[0].motifs[0].profile.risk = '探索风险';
+fixture.dimensions[0].motifs[1].profile.headline = '经营';
+fixture.dimensions[0].motifs[1].profile.risk = '经营风险';
 const run = entries => analyze(fixture, { entries }).dimensions[0];
 // Independent source records count separately. No baseline or trait score is manufactured.
 const repeated = run([entry('s1','偏财'),entry('s2','偏财','stem','月柱'),entry('h1','偏财','hidden'),entry('b1','正财')]);
@@ -26,7 +31,7 @@ assert.equal(repeated.headline, '探索');
 assert.equal(repeated.matches[0].support, 7);
 assert.equal(repeated.matches[0].evidence[0].hits.length, 3);
 assert.equal(repeated.evidenceCount, 4);
-assert.ok(repeated.tension.includes('探索') && repeated.tension.includes('经营'));
+assert.equal(repeated.tension, '探索风险');
 assert.equal(run([entry('o1','桃花','omen'),entry('o2','桃花','omen','时柱')]).matches[0].support, 2);
 assert.equal('score' in repeated, false);
 // Ties show both motifs, while a single motif uses its authored question rather than an invented counterpart.
@@ -34,13 +39,13 @@ const tie = run([entry('a','偏财'),entry('b','正财')]);
 assert.equal(tie.tied, true);
 assert.deepEqual(Array.from(tie.dominantIds), ['flow','care']);
 assert.equal(tie.practices.length, 2);
-assert.equal(run([entry('a','偏财')]).tension, fixture.dimensions[0].motifs[0].tension);
+assert.equal(run([entry('a','偏财')]).tension, fixture.dimensions[0].motifs[0].profile.risk);
 for (const data of [[], [entry('unmatched','文昌贵人','omen')]]) {
   const empty = run(data);
   assert.equal(empty.hasEvidence, false);
   assert.equal(empty.evidenceCount, 0);
   assert.equal(empty.matches.length, 0);
-  assert.equal(empty.headline, fixture.dimensions[0].empty.label);
+  assert.equal(empty.headline, fixture.dimensions[0].empty.profile.headline);
 }
 // Configuration edits actually change motif selection, not just display text.
 const changed = structuredClone(fixture);
@@ -57,8 +62,11 @@ for (const edit of [
   c => { c.dimensions[0].motifs[0].rules[0].kinds = ['invalid']; },
   c => { c.dimensions[0].motifs.push(c.dimensions[0].motifs[0]); },
   c => { c.dimensions[1].id = c.dimensions[0].id; },
-  c => { c.dimensions[0].tensionTemplate = '没有占位符'; },
-  c => { c.dimensions[0].empty.practice = ''; },
+  c => { c.dimensions[0].motifs[0].profile.behavior = ''; },
+  c => { c.patterns[0].requirements[0].minCount = 0; },
+  c => { c.patterns[0].profiles.unknown = c.patterns[0].profiles.mind; },
+  c => { c.patterns[0].priority = '100'; },
+  c => { c.dimensions[0].empty.profile.advice = ''; },
   c => { c.disclaimer = ''; }
 ]) {
   const broken = structuredClone(config);
@@ -71,6 +79,25 @@ const omenNames = vm.runInContext('Object.keys(SHENSHA_BY_NAME)', context);
 for (const dimension of config.dimensions) for (const motif of dimension.motifs) for (const rule of motif.rules) for (const name of rule.names) {
   for (const kind of rule.kinds) assert.ok((kind === 'omen' ? omenNames : godNames).includes(name), '未知规则名称：' + name);
 }
+
+// Specific combinations only apply when every condition, source type and minimum count is met.
+const combined = structuredClone(fixture);
+combined.patterns = [{
+  id:'officers', label:'官杀同透', priority:20, basisNote:'组合测试说明',
+  requirements:[{names:['正官'],kinds:['stem'],minCount:1},{names:['七杀'],kinds:['stem'],minCount:1}],
+  profiles:{mind:{...structuredClone(fixture.dimensions[0].motifs[0].profile),headline:'组合画像'}}
+}];
+const twoStems = [entry('official','正官'),entry('pressure','七杀','stem','时柱')];
+assert.equal(analyze(combined,{entries:twoStems}).dimensions[0].headline,'组合画像');
+assert.equal(analyze(combined,{entries:twoStems}).dimensions[0].selection.type,'pattern');
+assert.equal(analyze(combined,{entries:[twoStems[0]]}).dimensions[0].selection.type,'empty');
+assert.equal(analyze(combined,{entries:[twoStems[0],entry('hidden-pressure','七杀','hidden')]}).dimensions[0].selection.type,'empty');
+const prioritized = structuredClone(combined);
+prioritized.patterns.push({...structuredClone(combined.patterns[0]),id:'higher',priority:30,profiles:{mind:{...combined.patterns[0].profiles.mind,headline:'更高优先级'}}});
+assert.equal(analyze(prioritized,{entries:twoStems}).dimensions[0].headline,'更高优先级');
+// A profile edit must reach the exported narrative, rather than being ignored by the selector.
+combined.patterns[0].profiles.mind.behavior = '修改后的具体行为描述';
+assert.equal(analyze(combined,{entries:twoStems}).dimensions[0].profiles[0].behavior,'修改后的具体行为描述');
 
 // Real calendar + shensha library integration. Verify every cited record exists in the source chart.
 const reports = [];
@@ -96,6 +123,8 @@ for (const [year, month, day, hour, minute, gender] of [
   assert.equal(JSON.stringify(chart), original, 'Engine mutated chart');
   assert.equal(chart.entries.filter(e => e.kind === 'stem').length, 3);
   assert.equal(JSON.stringify(analyze(config, chart)), JSON.stringify(result), 'Results must be deterministic');
+  assert.equal(result.schemaVersion, 3);
+  assert.equal(result.portrait.length, 3);
   const source = new Map(chart.entries.map(e => [e.id, e]));
   for (const dimension of result.dimensions) {
     assert.equal('score' in dimension, false);
@@ -113,14 +142,32 @@ for (const [year, month, day, hour, minute, gender] of [
       }
       assert.equal(motif.support, support);
     }
+    if (dimension.selection.type === 'pattern') for (const condition of dimension.selection.requirements) {
+      assert.ok(condition.hits.length >= condition.minCount);
+      condition.hits.forEach(hit => {
+        assert.equal(source.get(hit.id).origin,hit.origin);
+        assert.ok(condition.names.includes(hit.name) && condition.kinds.includes(hit.kind));
+        seen.add(hit.id);
+      });
+    }
     assert.equal(dimension.evidenceCount, seen.size);
+    for (const profile of dimension.profiles) {
+      for (const field of ['core','behavior','strength','risk','environment','advice']) {
+        assert.ok(profile[field].length >= 20, 'Narrative field must provide concrete information: '+field);
+        assert.ok(!/本主题|可以观察|你可以回想|自我提问/.test(profile[field]), 'Do not substitute an observation prompt for interpretation');
+      }
+    }
+    if(year===1998) {
+      if(dimension.id==='mind') assert.equal(dimension.selection.id,'officers-visible');
+      if(dimension.id==='talent') assert.equal(dimension.selection.id,'wealth-and-order');
+    }
     assert.ok(dimension.practices.every(p => p.text.length > 0));
     if (dimension.hasEvidence) {
       const max = Math.max(...dimension.matches.map(m => m.support));
       assert.deepEqual(Array.from(dimension.dominantIds), Array.from(dimension.matches.filter(m => m.support === max), m => m.id));
     }
   }
-  reports.push({ birthday: [year, month, day].join('-'), pillars: Array.from(chart.pillars), motifs: Array.from(result.dimensions, d => d.headline) });
+  reports.push({ birthday: [year, month, day].join('-'), pillars: Array.from(chart.pillars), headlines: Array.from(result.dimensions, d => d.headline) });
 }
-console.log('Reading checks passed: 5 themes, duplicate sources, motif selection, ties, no-evidence, editable weights, invalid config, and 5 real charts.');
+console.log('Reading checks passed: concrete narratives, exact combination conditions, priority, source types, duplicate entries, editable copy, no-evidence, and 5 real charts.');
 console.log(JSON.stringify(reports));
