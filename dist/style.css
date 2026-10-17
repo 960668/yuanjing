@@ -79,7 +79,8 @@
 .reading-entry>.eyebrow{font-size:8px;letter-spacing:2px;color:#8b9d85}
 .reading-entry>button{display:flex;width:100%;min-height:82px;align-items:center;justify-content:space-between;gap:12px;text-align:left;margin-top:12px;padding:16px 18px;border:1px solid #e0ca95;border-radius:4px;background:#cbb482;color:#14251d;font:20px 'Songti SC',serif;box-shadow:0 4px 18px #cbb48216,inset 0 1px 0 #fff3;cursor:pointer;transition:background .18s,box-shadow .18s,transform .18s}
 .reading-entry button small{display:block;font:10px sans-serif;letter-spacing:1px;color:#3a4b37;margin-top:8px}
-.reading-entry button b{display:grid;place-items:center;flex:0 0 32px;height:32px;border:1px solid #31442e55;border-radius:50%;background:#14251d0b;font:20px sans-serif;font-weight:400}
+.reading-entry button .reading-arrow{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;padding:0;border:1px solid #31442e55;border-radius:50%;background:#14251d0b;line-height:0}
+.reading-arrow>svg{display:block;width:18px;height:18px;flex:none;pointer-events:none}
 .reading-entry>p{font-size:10px;line-height:1.7;color:#8fa18f;margin:10px 0 0}
 .reading-entry button:hover{color:#14251d;background:#dec997;box-shadow:0 7px 24px #cbb48228;transform:translateY(-2px)}
 .reading-entry button:active{background:#bca16d;box-shadow:0 2px 8px #cbb48216;transform:translateY(0)}
