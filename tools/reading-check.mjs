@@ -5,7 +5,7 @@ import vm from 'node:vm';
 const dist = new URL('../dist/', import.meta.url);
 const config = JSON.parse(await readFile(new URL('interpretation-rules.json', dist), 'utf8'));
 const context = vm.createContext({ console });
-for (const file of ['vendor/lunar.js', 'vendor/shensha.js', 'shensha-adapter.js', 'interpretation-engine.js']) {
+for (const file of ['vendor/lunar.js', 'vendor/shensha.js', 'symbol-icons.js', 'shensha-adapter.js', 'interpretation-engine.js']) {
   vm.runInContext(await readFile(new URL(file, dist), 'utf8'), context, { filename: file });
 }
 const { validate, analyze } = context.YuanjingReading;

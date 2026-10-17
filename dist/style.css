@@ -153,3 +153,11 @@
 #reading-dialog .reading-card .reading-selection{color:#cbbd99;font-size:10px}
 .reading-combination{padding:12px;background:#cbb78008;border:1px solid #cbb78024;margin-top:10px}
 @media(max-width:480px){.reading-portrait{padding:21px 17px}#reading-dialog .reading-portrait-row p{font-size:12px}}
+
+/* Inline vector icons stay identical across iOS, Android and desktop fonts. */
+.symbol-glyph{display:block;width:100%;height:100%;flex:none;pointer-events:none}
+.symbol i>.symbol-glyph{width:92%;height:92%;filter:drop-shadow(0 0 5px #9dcdbb40)}
+.symbol.omen i>.symbol-glyph{width:82%;height:82%;filter:drop-shadow(0 0 4px #c5a7df38)}
+.detailicon>.symbol-glyph{width:38px;height:38px}
+.detailicon[data-family="omen"]{color:#c6a9e6}
+.omen-list-icon{display:inline-flex;width:23px;height:23px;vertical-align:middle;margin-right:8px;color:inherit;font-style:normal}
