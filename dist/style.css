@@ -77,12 +77,14 @@
 [hidden]{display:none!important}
 .reading-entry{margin-top:22px;padding:18px 0 0;border-top:1px solid #b5c5a923}
 .reading-entry>.eyebrow{font-size:8px;letter-spacing:2px;color:#8b9d85}
-.reading-entry>button{display:flex;width:100%;align-items:center;justify-content:space-between;text-align:left;padding:12px 0 6px;color:#d7c399;font:20px 'Songti SC',serif}
-.reading-entry button small{display:block;font:10px sans-serif;letter-spacing:1px;color:#9baa98;margin-top:9px}
-.reading-entry button b{font:20px sans-serif;font-weight:400}
+.reading-entry>button{display:flex;width:100%;min-height:82px;align-items:center;justify-content:space-between;gap:12px;text-align:left;margin-top:12px;padding:16px 18px;border:1px solid #e0ca95;border-radius:4px;background:#cbb482;color:#14251d;font:20px 'Songti SC',serif;box-shadow:0 4px 18px #cbb48216,inset 0 1px 0 #fff3;cursor:pointer;transition:background .18s,box-shadow .18s,transform .18s}
+.reading-entry button small{display:block;font:10px sans-serif;letter-spacing:1px;color:#3a4b37;margin-top:8px}
+.reading-entry button b{display:grid;place-items:center;flex:0 0 32px;height:32px;border:1px solid #31442e55;border-radius:50%;background:#14251d0b;font:20px sans-serif;font-weight:400}
 .reading-entry>p{font-size:10px;line-height:1.7;color:#8fa18f;margin:10px 0 0}
-.reading-entry button:hover{color:#f3dba5}
-.reading-entry button:focus-visible{outline:1px solid #cbb482;outline-offset:6px}
+.reading-entry button:hover{color:#14251d;background:#dec997;box-shadow:0 7px 24px #cbb48228;transform:translateY(-2px)}
+.reading-entry button:active{background:#bca16d;box-shadow:0 2px 8px #cbb48216;transform:translateY(0)}
+.reading-entry button:focus-visible{outline:2px solid #f1dca7;outline-offset:4px}
+@media(prefers-reduced-motion:reduce){.reading-entry>button{transition:none}.reading-entry button:hover{transform:none}}
 #reading-dialog{box-sizing:border-box;width:min(1120px,94vw);max-width:1120px;max-height:90vh;max-height:90dvh;overflow:auto;padding:35px 38px 24px;background:radial-gradient(ellipse at top right,#203c3238,transparent 60%),#0f1b18;border-color:#9fb49545;box-shadow:0 35px 100px #0008;line-height:1.8}
 #reading-dialog h2{margin:10px 0 20px;font-size:28px;outline:none}
 #reading-dialog h3{font:22px 'Songti SC',serif;font-weight:400;color:#d8c799;letter-spacing:1px}
