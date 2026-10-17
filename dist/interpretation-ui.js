@@ -9,7 +9,6 @@
   const retry = byId('reading-retry');
   const kindNames = { stem: '透干', hidden: '藏干', omen: '神煞' };
   const inputKey = () => JSON.stringify(['date', 'time', 'zone', 'gender'].map(id => byId(id).value));
-  const signed = number => number >= 0 ? '+' + number : '−' + Math.abs(number);
   const node = (tag, className, text) => {
     const element = document.createElement(tag);
     if (className) element.className = className;
@@ -54,6 +53,8 @@
       const rules = await loadRules();
       if (token !== generation || !dialog.open) return;
       byId('reading-theme').textContent = rules.title;
+      byId('reading-scope').textContent = rules.intro;
+      byId('reading-preview').replaceChildren(...rules.dimensions.map((dimension, index) => node('span', '', String(index + 1).padStart(2, '0') + ' / ' + dimension.title)));
       byId('reading-config-note').textContent = rules.disclaimer;
       byId('reading-rule-version').textContent = '规则版本 ' + rules.version + ' · 全部计算在浏览器本地完成';
       start.disabled = isDirty();
@@ -69,45 +70,68 @@
     heading.append(node('p', 'reading-caption', chart.date + ' · ' + chart.time + ' · UTC' + (Number(chart.zone) >= 0 ? '+' : '') + chart.zone));
     heading.append(node('p', 'reading-pillars', chart.pillars.map(p => p.label + ' ' + p.value).join('　')));
     heading.append(node('p', 'reading-caption', '日主 ' + chart.dayMaster + ' · 透干 ' + chart.stemCount + ' 项 / 藏干 ' + chart.hiddenCount + ' 项 / 神煞 ' + chart.omenCount + ' 项'));
+    const featured = node('div', 'reading-featured-grid');
     const grid = node('div', 'reading-grid');
-    result.dimensions.forEach((dimension, index) => {
-      const card = node('article', 'reading-card');
-      card.append(node('div', 'reading-card-index', '0' + (index + 1) + ' / ' + dimension.subtitle));
-      card.append(node('h3', '', dimension.title));
-      const score = node('div', 'reading-score');
-      score.append(node('b', '', String(dimension.score)), node('small', '', ' / ' + result.scale.max));
-      card.append(score, node('p', 'reading-scale-label', result.scale.label + ' · 非概率 / 非心理测评'));
-      const meter = node('div', 'reading-meter');
-      meter.setAttribute('aria-hidden', 'true');
-      const fill = node('i');
-      fill.style.width = (dimension.score - result.scale.min) / (result.scale.max - result.scale.min) * 100 + '%';
-      meter.append(fill);
-      card.append(meter, node('h4', '', dimension.band.label), node('p', '', dimension.band.text), node('p', 'reading-definition', dimension.description));
-      const detail = node('details', 'reading-evidence');
-      const count = dimension.evidence.reduce((sum, rule) => sum + rule.hits.length, 0);
-      detail.append(node('summary', '', '查看分析依据 · ' + count + ' 条命中'));
-      if (!dimension.hasEvidence) detail.append(node('p', '', dimension.band.text));
-      dimension.evidence.forEach(rule => {
-        const group = node('section', 'reading-rule');
-        group.append(node('h5', '', rule.id + ' · 合计 ' + signed(rule.contribution)), node('p', '', rule.explanation));
-        const list = node('ul');
-        rule.hits.forEach(hit => {
-          const item = node('li');
-          item.append(node('span', '', hit.name + ' · ' + kindNames[hit.kind] + ' ' + signed(hit.points)), node('small', '', hit.origin));
-          if (hit.basis) item.append(node('small', '', '查法：' + hit.basis));
-          list.append(item);
+    result.dimensions.forEach(dimension => {
+      const card = node('article', 'reading-card' + (dimension.featured ? ' reading-card-featured' : ''));
+      card.append(node('div', 'reading-card-index', (dimension.featured ? '核心探索 / ' : '') + dimension.subtitle));
+      card.append(node('h3', '', dimension.title), node('p', 'reading-question', dimension.question));
+      card.append(node('h4', 'reading-section-label', '主导意象'), node('p', 'reading-motif', dimension.headline));
+      if (dimension.tied) card.append(node('p', 'reading-tie', '同权意象并列呈现，不分高低。'));
+      dimension.texts.forEach(text => card.append(node('p', 'reading-interpretation', text)));
+      const sources = node('section', 'reading-source-preview');
+      sources.append(node('h4', 'reading-section-label', '命盘依据'));
+      if (dimension.hasEvidence) {
+        dimension.mainSources.slice(0, 2).forEach(source => {
+          sources.append(node('p', '', source.origin + ' → ' + source.name + '（' + kindNames[source.kind] + '）'));
         });
-        group.append(list);
+        if (dimension.mainSources.length > 2) sources.append(node('p', 'reading-source-more', '主导意象另有 ' + (dimension.mainSources.length - 2) + ' 项来源，可展开核对。'));
+      } else sources.append(node('p', '', '当前规则未命中；暂不推演主导意象。'));
+      const detail = node('details', 'reading-evidence');
+      detail.append(node('summary', '', '展开全部依据 · ' + dimension.evidenceCount + ' 个命盘条目'));
+      detail.append(node('p', 'reading-weight-note', '以下权重只用于选择意象，不是能力分数。同一条目可以支持不同意象。'));
+      if (!dimension.hasEvidence) detail.append(node('p', '', '未命中不代表缺少相关能力；也可能是规则尚未覆盖。'));
+      dimension.matches.forEach(motif => {
+        const group = node('section', 'reading-rule');
+        const isDominant = dimension.dominantIds.includes(motif.id);
+        group.append(node('h5', '', motif.label + ' · ' + (isDominant ? '主导' : '伴随') + '意象 · 匹配权重 ' + motif.support));
+        motif.evidence.forEach(rule => {
+          group.append(node('p', '', rule.explanation));
+          const list = node('ul');
+          rule.hits.forEach(hit => {
+            const item = node('li');
+            item.append(node('span', '', hit.name + ' · ' + kindNames[hit.kind]), node('small', '', hit.origin));
+            item.append(node('small', '', '来源权重 ' + hit.sourceWeight + ' × 映射系数 ' + hit.ruleWeight + ' = ' + hit.support));
+            if (hit.basis) item.append(node('small', '', '查法：' + hit.basis));
+            list.append(item);
+          });
+          group.append(list);
+        });
+        const expression = motif.evidence.map(rule => String(rule.support)).join(' + ');
+        group.append(node('p', 'reading-weight-note', '匹配权重合计：' + expression + ' = ' + motif.support));
         detail.append(group);
       });
-      const expression = [String(result.scale.base), ...dimension.evidence.map(rule => signed(rule.contribution))].join(' ');
-      detail.append(node('p', 'reading-formula', '刻度 = ' + expression + ' = ' + dimension.rawScore + '；限制在 ' + result.scale.min + '–' + result.scale.max + ' 后为 ' + dimension.score + '。'));
-      card.append(detail);
-      grid.append(card);
+      sources.append(detail);
+      card.append(sources);
+      const tension = node('section', 'reading-tension');
+      tension.append(node('h4', 'reading-section-label', '内在张力'), node('p', '', dimension.tension));
+      const practice = node('section', 'reading-practice');
+      practice.append(node('h4', 'reading-section-label', dimension.practices.length > 1 ? '任选一件小事练习' : '一件小事，开始修行'));
+      dimension.practices.forEach(item => {
+        if (dimension.practices.length > 1) practice.append(node('h5', '', item.label));
+        practice.append(node('p', '', item.text));
+      });
+      card.append(tension, practice);
+      (dimension.featured ? featured : grid).append(card);
     });
     const method = node('details', 'reading-method');
-    method.append(node('summary', '', '解读如何生成'), node('p', '', result.methodNote), node('p', '', '规则版本：' + result.version + '。相同输入与相同规则产生相同结果，不调用大模型，也不向外部服务上传生辰。修改规则后，结果可能改变。'));
-    results.replaceChildren(heading, grid, method);
+    method.append(node('summary', '', '解读如何生成'), node('p', '', result.methodNote));
+    method.append(node('p', '', '当前来源权重：透干 ' + result.sourceWeights.stem + ' / 藏干 ' + result.sourceWeights.hidden + ' / 神煞 ' + result.sourceWeights.omen + '。只比较同一主题中的意象匹配，不比较人与人。'));
+    method.append(node('p', '', '规则版本：' + result.version + '。相同输入与规则产生相同结果，不调用大模型，也不向外部服务上传生辰。可编辑规则与文案，修改后解读可能改变。'));
+    const sections = [heading];
+    if (featured.children.length) sections.push(node('h3', 'reading-group-title', '先看天赋，再选一件事练习'), featured);
+    if (grid.children.length) sections.push(node('h3', 'reading-group-title', '继续探索你的内在宇宙'), grid);
+    results.replaceChildren(...sections, method);
   }
   byId('reading-open').onclick = () => {
     invalidate();
@@ -128,7 +152,7 @@
       start.hidden = true;
       byId('reading-export').hidden = false;
       byId('reading-again').hidden = false;
-      status.textContent = '娱乐解读已生成。每项分数均可展开查看柱位与加减分依据。';
+      status.textContent = result.dimensions.length + ' 个主题已展开。可查看主导意象、柱位依据，并选择一件适合当下的小事练习。';
       dialog.scrollTop = 0;
       byId('reading-title').focus({ preventScroll: true });
     } catch (error) {

@@ -9,7 +9,7 @@ const html = await readFile(path.join(dist, 'index.html'), 'utf8');
 for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
   const ref = match[1];
   if (/^(https?:|#|mailto:)/.test(ref)) continue;
-  await access(path.resolve(dist, ref));
+  await access(path.resolve(dist, ref.split(/[?#]/)[0]));
 }
 for (const file of ['app.js', 'cosmos3d.js', 'shensha-adapter.js', 'vendor/shensha.js', 'interpretation-engine.js', 'interpretation-ui.js']) {
   const result = spawnSync(process.execPath, ['--check', path.join(dist, file)], { encoding: 'utf8' });

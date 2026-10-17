@@ -99,22 +99,13 @@
 .reading-chart{margin-bottom:22px}
 #reading-dialog .reading-caption{font-size:10px;color:#8eaa96;margin:4px 0;letter-spacing:.3px}
 #reading-dialog .reading-pillars{font:17px/1.9 'Songti SC',serif;letter-spacing:2px;color:#d0c3a3;margin:10px 0}
-.reading-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
-.reading-card{min-width:0;padding:23px 20px;border:1px solid #b5c5a92c;background:#20312842}
+.reading-featured-grid,.reading-grid{display:grid;gap:18px;align-items:start}.reading-featured-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:30px}.reading-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.reading-card{min-width:0;padding:23px 20px;border:1px solid #b5c5a92c;background:#20312842}.reading-card-featured{padding:27px 26px;border-top:2px solid #c5ae7c;background:linear-gradient(160deg,#bba3710c,transparent 50%),#20312842}.reading-card-featured:nth-child(2){border-top-color:#a7bfa2}
 .reading-card-index{color:#a8bda2;font-size:9px;letter-spacing:1px}
 #reading-dialog .reading-card h3{font-size:23px;margin:17px 0 12px}
-.reading-score{color:#dac391;font-family:'Songti SC',serif;line-height:1.1}
-.reading-score b{font-size:54px;font-weight:400}
-.reading-score small{font:13px sans-serif;color:#7e9584}
-#reading-dialog .reading-scale-label{font-size:9px;color:#a2ad98;margin:12px 0}
-.reading-meter{height:3px;background:#39504480;margin:15px 0 22px}
-.reading-meter i{display:block;height:100%;background:linear-gradient(90deg,#8ab49b,#d3bb83)}
-.reading-card:nth-child(2) .reading-meter i{background:linear-gradient(90deg,#648c81,#b3cba3)}
-.reading-card:nth-child(3) .reading-meter i{background:linear-gradient(90deg,#778b9b,#b7a7c3)}
-.reading-card h4{font-size:12px;color:#c5d0ba;font-weight:400;margin:0 0 9px}
+.reading-card .reading-section-label{font-size:10px;letter-spacing:2px;color:#a7b99b;font-weight:400;margin:18px 0 8px}
 #reading-dialog .reading-card p{font-size:11px;margin:8px 0;color:#a2b19f}
-#reading-dialog .reading-definition{font-size:10px;color:#8e9c89;border-top:1px solid #bed2ac15;padding-top:13px;margin-top:16px}
-.reading-evidence{margin-top:18px;border-top:1px solid #b5c5a926;padding-top:13px}
+.reading-evidence{margin-top:11px;padding-top:3px}
 .reading-evidence summary,.reading-method summary{cursor:pointer;color:#c8b78f;font-size:11px;list-style-position:inside}
 .reading-evidence summary:focus-visible,.reading-method summary:focus-visible{outline:1px solid #c8b78f;outline-offset:5px}
 .reading-rule{padding:13px 0;border-bottom:1px solid #b5c5a91c}
@@ -122,7 +113,6 @@
 .reading-rule ul{padding-left:16px;margin:9px 0 0;font-size:10px;color:#bbcab0}
 .reading-rule li{margin:10px 0}
 .reading-rule li small{display:block;font-size:9px;color:#8fa58f;line-height:1.7}
-#reading-dialog .reading-formula{font-size:10px;overflow-wrap:anywhere;color:#bfb187;margin-top:14px}
 .reading-method{margin-top:24px;padding:15px 0;border-top:1px solid #b5c5a927}
 .reading-actions{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0 12px}
 .reading-actions button{padding:11px 18px;border:1px solid #adbd9b55;font-size:12px;color:#c2ccaf}
@@ -131,5 +121,19 @@
 .reading-actions button:focus-visible{outline:2px solid #dac698;outline-offset:4px}
 #reading-status{font-size:11px;min-height:20px;color:#b6c5a5}
 #reading-dialog .reading-version{font-size:9px;color:#8a9f8c;margin:14px 0 0}
-@media(max-width:900px){.reading-grid{grid-template-columns:1fr}.reading-card{padding:22px}.reading-score b{font-size:46px}#reading-dialog{padding:26px 24px}.reading-chart{margin-bottom:18px}}
+@media(max-width:900px){.reading-grid,.reading-featured-grid{grid-template-columns:1fr}.reading-card{padding:22px}#reading-dialog{padding:26px 24px}.reading-chart{margin-bottom:18px}}
 @media(max-width:480px){#reading-dialog{width:96vw;max-height:94dvh;padding:22px 16px}.reading-card{padding:20px 16px}.reading-preview{gap:10px 15px;font-size:10px}.reading-actions button{flex:1;white-space:nowrap;font-size:11px}.reading-pillars{letter-spacing:0!important;font-size:15px!important}}
+
+#reading-dialog .reading-group-title{font:18px 'Songti SC',serif;color:#cbbd9d;letter-spacing:2px;margin:25px 0 16px}
+#reading-dialog .reading-card .reading-question{font-size:10px;color:#8fa58f;margin:10px 0 22px}
+#reading-dialog .reading-card .reading-motif{font:22px/1.6 'Songti SC',serif;color:#d8c395;margin:6px 0 13px;letter-spacing:1px}
+#reading-dialog .reading-card .reading-tie{font-size:9px;color:#b2c1a9;margin:5px 0 12px}
+#reading-dialog .reading-card .reading-interpretation{color:#bbc7b1;font-size:12px;line-height:1.95}
+.reading-source-preview{padding-top:2px;margin-top:17px;border-top:1px solid #b5c5a91f}
+#reading-dialog .reading-source-preview>p{font-size:10px;color:#b7b595}
+#reading-dialog .reading-card .reading-source-more,#reading-dialog .reading-card .reading-weight-note{font-size:9px;color:#8da58d}
+.reading-tension{margin-top:17px;padding-top:1px;border-top:1px solid #b5c5a91f}
+.reading-practice{margin-top:20px;padding:1px 15px 12px;border-left:2px solid #bda974;background:#c8b3810b}
+#reading-dialog .reading-card .reading-practice p{color:#d0c6a8;font-size:11px}
+.reading-practice h5{font-size:10px;font-weight:400;color:#c4cfb6;margin:15px 0 0}
+@media(max-width:480px){.reading-card-featured{padding:22px 17px}#reading-dialog .reading-card .reading-motif{font-size:20px}}

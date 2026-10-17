@@ -1,74 +1,90 @@
-/* Pure, local rule engine. The score is an authored entertainment scale. */
+/* Local cultural-symbol matching. Weights select motifs; they do not measure personality. */
 (function (root) {
   'use strict';
   const kinds = ['stem', 'hidden', 'omen'];
+  const nonempty = value => typeof value === 'string' && value.trim().length > 0;
+  const object = value => value && typeof value === 'object' && !Array.isArray(value);
   function assert(ok, message) {
     if (!ok) throw new Error('解读规则配置错误：' + message);
   }
-  const nonempty = value => typeof value === 'string' && value.trim().length > 0;
+  function requireText(value, keys, path) {
+    assert(object(value), path + ' 必须是对象');
+    keys.forEach(key => assert(nonempty(value[key]), path + '.' + key + ' 不能为空'));
+  }
   function validate(config) {
-    assert(config && config.schemaVersion === 1, 'schemaVersion 必须为 1');
-    for (const key of ['version', 'title', 'disclaimer', 'methodNote']) assert(nonempty(config[key]), key + ' 不能为空');
-    const scale = config.scale;
-    assert(scale && Number.isFinite(scale.min) && Number.isFinite(scale.max) && scale.min < scale.max, '刻度范围无效');
-    assert(Number.isFinite(scale.base) && scale.base >= scale.min && scale.base <= scale.max, '起点必须在刻度范围内');
-    assert(nonempty(scale.label), '刻度名称不能为空');
-    assert(Array.isArray(config.dimensions) && config.dimensions.length > 0, '至少配置一个维度');
-    const ids = new Set();
+    assert(object(config) && config.schemaVersion === 2, 'schemaVersion 必须为 2，请刷新网页以使用新版解读');
+    requireText(config, ['version', 'title', 'intro', 'disclaimer', 'methodNote'], 'config');
+    assert(object(config.sourceWeights) && Object.keys(config.sourceWeights).length === kinds.length, 'sourceWeights 必须包含且仅包含 stem/hidden/omen');
+    kinds.forEach(kind => assert(Number.isInteger(config.sourceWeights[kind]) && config.sourceWeights[kind] >= 1 && config.sourceWeights[kind] <= 10, kind + ' 来源权重须为 1–10 的整数'));
+    assert(Array.isArray(config.dimensions) && config.dimensions.length > 0, '至少配置一个主题');
+    const dimensionIds = new Set();
     config.dimensions.forEach(dimension => {
-      assert(nonempty(dimension.id) && !ids.has(dimension.id), '维度 id 为空或重复');
-      ids.add(dimension.id);
-      for (const key of ['title', 'subtitle', 'description', 'noEvidence']) assert(nonempty(dimension[key]), dimension.id + '.' + key + ' 不能为空');
-      assert(Array.isArray(dimension.bands) && dimension.bands.length > 0, dimension.id + ' 缺少分档');
-      let last = -Infinity;
-      dimension.bands.forEach(band => {
-        assert(Number.isFinite(band.max) && band.max > last, dimension.id + ' 的分档上限须严格递增');
-        assert(nonempty(band.label) && nonempty(band.text), dimension.id + ' 的分档文案不能为空');
-        last = band.max;
-      });
-      assert(last >= scale.max, dimension.id + ' 的分档未覆盖刻度上限');
-      assert(Array.isArray(dimension.rules), dimension.id + '.rules 必须为数组');
-      const ruleIds = new Set();
-      dimension.rules.forEach(rule => {
-        assert(nonempty(rule.id) && !ruleIds.has(rule.id), dimension.id + ' 规则 id 为空或重复');
-        ruleIds.add(rule.id);
-        assert(Array.isArray(rule.names) && rule.names.length > 0 && rule.names.every(nonempty), rule.id + ' 缺少匹配名称');
-        assert(new Set(rule.names).size === rule.names.length, rule.id + ' 匹配名称重复');
-        assert(rule.points && Object.keys(rule.points).length > 0, rule.id + ' 缺少权重');
-        Object.entries(rule.points).forEach(([kind, points]) => {
-          assert(kinds.includes(kind) && Number.isInteger(points) && Math.abs(points) <= 100, rule.id + ' 权重须为 -100 至 100 的整数，类型限 stem/hidden/omen');
+      requireText(dimension, ['id', 'title', 'subtitle', 'question', 'tensionTemplate'], 'dimension');
+      assert(!dimensionIds.has(dimension.id), '主题 id 重复');
+      dimensionIds.add(dimension.id);
+      assert(dimension.featured === undefined || typeof dimension.featured === 'boolean', dimension.id + '.featured 须为布尔值');
+      assert(dimension.tensionTemplate.includes('{first}') && dimension.tensionTemplate.includes('{second}'), dimension.id + ' 张力模板须包含 {first} 和 {second}');
+      requireText(dimension.empty, ['label', 'text', 'tension', 'practice'], dimension.id + '.empty');
+      assert(Array.isArray(dimension.motifs) && dimension.motifs.length > 0, dimension.id + ' 缺少意象');
+      const motifIds = new Set();
+      dimension.motifs.forEach(motif => {
+        requireText(motif, ['id', 'label', 'text', 'tension', 'practice'], dimension.id + '.motif');
+        assert(!motifIds.has(motif.id), dimension.id + ' 意象 id 重复');
+        motifIds.add(motif.id);
+        assert(Array.isArray(motif.rules) && motif.rules.length > 0, motif.id + ' 缺少匹配规则');
+        const ruleIds = new Set();
+        motif.rules.forEach(rule => {
+          requireText(rule, ['id', 'explanation'], motif.id + '.rule');
+          assert(!ruleIds.has(rule.id), motif.id + ' 规则 id 重复');
+          ruleIds.add(rule.id);
+          assert(Array.isArray(rule.names) && rule.names.length > 0 && rule.names.every(nonempty) && new Set(rule.names).size === rule.names.length, rule.id + ' 名称为空或重复');
+          assert(Array.isArray(rule.kinds) && rule.kinds.length > 0 && rule.kinds.every(kind => kinds.includes(kind)) && new Set(rule.kinds).size === rule.kinds.length, rule.id + ' 来源类型无效或重复');
+          assert(Number.isFinite(rule.weight) && rule.weight > 0 && rule.weight <= 10, rule.id + ' 映射系数须大于 0 且不超过 10');
         });
-        assert(nonempty(rule.explanation), rule.id + ' 缺少映射说明');
       });
     });
     return config;
   }
+  const rounded = value => Math.round(value * 1e6) / 1e6;
   function analyze(config, chart) {
     validate(config);
     assert(chart && Array.isArray(chart.entries), '缺少命盘条目');
     const ids = new Set();
     chart.entries.forEach(entry => {
-      assert(entry && nonempty(entry.id) && !ids.has(entry.id), '命盘条目 id 为空或重复');
+      assert(object(entry) && nonempty(entry.id) && !ids.has(entry.id), '命盘条目 id 为空或重复');
       ids.add(entry.id);
       assert(kinds.includes(entry.kind) && nonempty(entry.name) && nonempty(entry.pillar) && nonempty(entry.origin), '命盘条目不完整');
     });
     const dimensions = config.dimensions.map(dimension => {
-      const evidence = dimension.rules.map(rule => {
-        const hits = chart.entries.filter(entry => rule.names.includes(entry.name) && Object.hasOwn(rule.points, entry.kind))
-          .map(entry => ({ ...entry, points: rule.points[entry.kind] }));
-        return { id: rule.id, explanation: rule.explanation, hits, contribution: hits.reduce((sum, hit) => sum + hit.points, 0) };
-      }).filter(rule => rule.hits.length > 0);
-      const delta = evidence.reduce((sum, rule) => sum + rule.contribution, 0);
-      const rawScore = config.scale.base + delta;
-      const score = Math.max(config.scale.min, Math.min(config.scale.max, rawScore));
-      const band = dimension.bands.find(b => score <= b.max);
+      const matches = dimension.motifs.map((motif, order) => {
+        const evidence = motif.rules.map(rule => {
+          const hits = chart.entries.filter(entry => rule.names.includes(entry.name) && rule.kinds.includes(entry.kind))
+            .map(entry => ({ ...entry, sourceWeight: config.sourceWeights[entry.kind], ruleWeight: rule.weight, support: rounded(config.sourceWeights[entry.kind] * rule.weight) }));
+          return { id: rule.id, explanation: rule.explanation, hits, support: rounded(hits.reduce((sum, hit) => sum + hit.support, 0)) };
+        }).filter(rule => rule.hits.length > 0);
+        return { id: motif.id, label: motif.label, text: motif.text, tension: motif.tension, practice: motif.practice, order,
+          support: rounded(evidence.reduce((sum, rule) => sum + rule.support, 0)), evidence };
+      }).filter(motif => motif.evidence.length > 0).sort((a, b) => b.support - a.support || a.order - b.order);
+      const dominant = matches.length ? matches.filter(motif => motif.support === matches[0].support) : [];
+      const distinct = new Map();
+      matches.forEach(motif => motif.evidence.forEach(rule => rule.hits.forEach(hit => distinct.set(hit.id, { ...hit }))));
+      const mainSources = new Map();
+      dominant.forEach(motif => motif.evidence.forEach(rule => rule.hits.forEach(hit => mainSources.set(hit.id, { ...hit }))));
+      const tension = matches.length >= 2
+        ? dimension.tensionTemplate.replaceAll('{first}', matches[0].label).replaceAll('{second}', matches[1].label)
+        : matches.length ? matches[0].tension : dimension.empty.tension;
       return {
-        id: dimension.id, title: dimension.title, subtitle: dimension.subtitle, description: dimension.description,
-        score, rawScore, delta, evidence, hasEvidence: evidence.length > 0,
-        band: evidence.length ? { ...band } : { label: '无命中依据', text: dimension.noEvidence }
+        id: dimension.id, title: dimension.title, subtitle: dimension.subtitle, question: dimension.question,
+        featured: Boolean(dimension.featured), hasEvidence: matches.length > 0,
+        headline: dominant.length ? dominant.map(motif => motif.label).join(' · ') : dimension.empty.label,
+        texts: dominant.length ? dominant.map(motif => motif.text) : [dimension.empty.text],
+        dominantIds: dominant.map(motif => motif.id), tied: dominant.length > 1,
+        tension, practices: dominant.length ? dominant.map(motif => ({ label: motif.label, text: motif.practice })) : [{ label: '从观察开始', text: dimension.empty.practice }],
+        evidenceCount: distinct.size, mainSources: Array.from(mainSources.values()), matches
       };
     });
-    return { version: config.version, disclaimer: config.disclaimer, methodNote: config.methodNote, scale: { ...config.scale }, dimensions };
+    return { schemaVersion: 2, version: config.version, title: config.title, disclaimer: config.disclaimer,
+      methodNote: config.methodNote, sourceWeights: { ...config.sourceWeights }, dimensions };
   }
   root.YuanjingReading = Object.freeze({ validate, analyze });
 })(globalThis);
