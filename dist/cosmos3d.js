@@ -1,14 +1,13 @@
 import * as THREE from './vendor/three.module.js';
-import { bindOrbitGestures } from './orbit-gestures.js';
 const host=document.querySelector('.world');
 let renderer;
 try{renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});}catch(error){console.warn('WebGL unavailable; keeping the flat star map.',error);}
 if(renderer) init();
 function init(){
  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(43,1,.1,100),universe=new THREE.Group();scene.add(universe);
- const viewport=document.createElement('div');viewport.className='cosmos3d';viewport.setAttribute('aria-hidden','true');renderer.domElement.setAttribute('aria-hidden','true');viewport.append(renderer.domElement);host.prepend(viewport);
+ const viewport=document.createElement('div');viewport.className='cosmos3d';viewport.setAttribute('aria-label','二维灵体周围的三维浑天星环，可拖拽旋转');renderer.domElement.setAttribute('aria-hidden','true');viewport.append(renderer.domElement);host.prepend(viewport);
  renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor(0x000000,0);host.classList.add('has-3d');
- const satelliteGroup=new THREE.Group();universe.add(satelliteGroup);let satellites=[],rings=[],yaw=0,pitch=.10,distance=12,zoom3d=1,orbitTime=0,orbitMotion=true,hovered=false,last=0;
+ const satelliteGroup=new THREE.Group();universe.add(satelliteGroup);let satellites=[],rings=[],yaw=0,pitch=.10,distance=12,zoom3d=1,orbitTime=0,orbitMotion=true,hovered=false,last=0,dragged=false,pointerDown=new Map();
  const ringDefs=[
   {kind:'stem',radius:2.15,orientation:new THREE.Euler(.95,.25,.20),speed:1,color:0xa9c29c},
   {kind:'hidden',radius:3.20,orientation:new THREE.Euler(-.65,.85,-.55),speed:-.72,color:0x75998c},
@@ -36,16 +35,20 @@ function init(){
  }
  // Keep the existing birthday, filter and click flows, adding depth after every render.
  const flatRender=renderSymbols;renderSymbols=function(){flatRender();rebuild()};rebuild();
- function reset(){yaw=0;pitch=.10;zoom3d=1;orbitTime=0;orbitMotion=true;gestures.reset()}
+ function reset(){yaw=0;pitch=.10;zoom3d=1;orbitTime=0;orbitMotion=true}
  const resetSolar=$('reset').onclick;$('reset').onclick=()=>{resetSolar();reset()};
- // The visual canvas stays full-size; only this smaller surface owns orbit gestures.
- const interaction=document.createElement('div');interaction.className='orbit-interaction';interaction.tabIndex=0;
- interaction.setAttribute('role','application');interaction.setAttribute('aria-label','浑天星环：横向滑动旋转，上下滑动页面，双指缩放；鼠标拖拽或方向键可旋转，Home 复位。');host.append(interaction);
- const gestures=bindOrbitGestures(interaction,{
-  onRotate:(dx,dy)=>{yaw+=dx*.007;pitch=Math.max(-1.05,Math.min(1.05,pitch+dy*.006));},
-  onScale:factor=>{zoom3d=Math.max(.65,Math.min(1.35,zoom3d*factor));}
- });
- interaction.addEventListener('keydown',e=>{const moves={ArrowLeft:[-.1,0],ArrowRight:[.1,0],ArrowUp:[0,-.1],ArrowDown:[0,.1]};if(moves[e.key]){e.preventDefault();yaw+=moves[e.key][0];pitch=Math.max(-1.05,Math.min(1.05,pitch+moves[e.key][1]));}if(e.key==='Home'){e.preventDefault();reset()}});
+ const oldPointerUp=host.onpointerup;
+ host.onpointerdown=e=>{if(e.target.closest('button'))return;pointerDown.set(e.pointerId,{x:e.clientX,y:e.clientY});dragged=false;host.setPointerCapture(e.pointerId);host.classList.add('dragging')};
+ host.onpointermove=e=>{
+  const prev=pointerDown.get(e.pointerId);if(!prev)return;
+  if(pointerDown.size===1){yaw+=(e.clientX-prev.x)*.007;pitch=Math.max(-1.05,Math.min(1.05,pitch+(e.clientY-prev.y)*.006));}
+  else{const other=[...pointerDown.entries()].find(([id])=>id!==e.pointerId)?.[1];if(other){const before=Math.hypot(prev.x-other.x,prev.y-other.y),after=Math.hypot(e.clientX-other.x,e.clientY-other.y);if(before>0)zoom3d=Math.max(.65,Math.min(1.35,zoom3d*after/before));}}
+  if(Math.abs(e.clientX-prev.x)+Math.abs(e.clientY-prev.y)>2)dragged=true;pointerDown.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ };
+ host.onpointerup=e=>{pointerDown.delete(e.pointerId);host.classList.remove('dragging');if(!dragged&&!e.target.closest('button'))oldPointerUp?.(e)};
+ host.onpointercancel=e=>{pointerDown.delete(e.pointerId);host.classList.remove('dragging')};
+ host.onwheel=e=>{e.preventDefault();zoom3d=Math.max(.65,Math.min(1.35,zoom3d-e.deltaY*.001))};
+ host.addEventListener('keydown',e=>{if(e.target!==viewport)return;const moves={ArrowLeft:[-.1,0],ArrowRight:[.1,0],ArrowUp:[0,-.1],ArrowDown:[0,.1]};if(moves[e.key]){e.preventDefault();yaw+=moves[e.key][0];pitch=Math.max(-1.05,Math.min(1.05,pitch+moves[e.key][1]));}if(e.key==='Home')reset()});viewport.tabIndex=0;viewport.setAttribute('role','application');viewport.setAttribute('aria-label','浑天星环：自动环绕，拖拽或方向键旋转星环，人形固定，滚轮或双指缩放，Home 恢复正面');
  function resizeScene(){const width=host.clientWidth,height=570;renderer.setSize(width,height);camera.aspect=width/height;camera.updateProjectionMatrix();distance=5.5/(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*Math.min(1,camera.aspect));}
  new ResizeObserver(resizeScene).observe(host);resizeScene();
  function frame(t){const dt=Math.min((t-last)/1000,.05);last=t;if(orbitMotion&&!hovered)orbitTime+=dt*.12;
@@ -58,5 +61,5 @@ function init(){
  host.addEventListener('focusin',e=>{if(e.target.closest('.symbol'))hovered=true});
  host.addEventListener('focusout',e=>{if(e.target.closest('.symbol'))hovered=false});
  requestAnimationFrame(frame);
- renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();gestures.destroy();interaction.remove();host.classList.remove('has-3d');renderSymbols=flatRender;flatRender()});
+ renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();host.classList.remove('has-3d');renderSymbols=flatRender;flatRender()});
 }
